@@ -5,6 +5,9 @@ import scissorsImg from "./assets/scissors.png";
 import musicFile from "./assets/music.mp3";
 import recruiter from "./assets/recruiter.png";
 import rpsRecruiter from "./assets/rpsRecruiter.png";
+import youwin from "./assets/youwin.png";
+import youlose from "./assets/youlose.png";
+import happysg from "./assets/happysg.png";
 
 function determineWinner(
   playerChoice: string,
@@ -79,38 +82,42 @@ function App() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Music effect - start playing when component mounts
-const startGame = () => {
-  setGameStarted(true);
-  
-  // Use setTimeout to ensure the audio element is ready
-  setTimeout(() => {
-    if (audioRef.current) {
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0.3;
-      
-      // Reset the audio to beginning in case it was paused
-      audioRef.current.currentTime = 0;
-      
-      const playPromise = audioRef.current.play();
-      
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            console.log("Music started successfully!");
-          })
-          .catch((error) => {
-            console.log("Failed to start music:", error);
-            // Try alternative approach
-            document.addEventListener('click', () => {
-              if (audioRef.current) {
-                audioRef.current.play();
-              }
-            }, { once: true });
-          });
+  const startGame = () => {
+    setGameStarted(true);
+
+    // Use setTimeout to ensure the audio element is ready
+    setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.loop = true;
+        audioRef.current.volume = 0.3;
+
+        // Reset the audio to beginning in case it was paused
+        audioRef.current.currentTime = 0;
+
+        const playPromise = audioRef.current.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log("Music started successfully!");
+            })
+            .catch((error) => {
+              console.log("Failed to start music:", error);
+              // Try alternative approach
+              document.addEventListener(
+                "click",
+                () => {
+                  if (audioRef.current) {
+                    audioRef.current.play();
+                  }
+                },
+                { once: true }
+              );
+            });
+        }
       }
-    }
-  }, 100);
-};
+    }, 100);
+  };
 
   // Timer effect
   useEffect(() => {
@@ -227,7 +234,7 @@ const startGame = () => {
     return `${seconds}.${milliseconds.toString().padStart(3, "0")}`;
   };
 
-     if (!gameStarted) {
+  if (!gameStarted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-4">
         <img
@@ -237,17 +244,21 @@ const startGame = () => {
           style={{ filter: "grayscale(100%)" }}
           onError={(e) => {
             console.log("Failed to load recruiter image");
-            e.currentTarget.style.display = 'none';
+            e.currentTarget.style.display = "none";
           }}
         />
-        <h1 className="text-2xl md:text-3xl font-bold text-center">Rock Paper Scissors Minus One</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-center">
+          Rock Paper Scissors Minus One
+        </h1>
         <button
           onClick={startGame}
           className="px-8 py-4 bg-blue-500 text-white text-xl font-bold rounded-lg hover:bg-blue-600 transition-colors shadow-lg"
         >
           🎵 Start Game 🎵
         </button>
-        <p className="text-gray-600 text-center">Click to start the game with music!</p>
+        <p className="text-gray-600 text-center">
+          Click to start the game with music!
+        </p>
 
         <audio ref={audioRef} preload="auto">
           <source src={musicFile} type="audio/mpeg" />
@@ -258,23 +269,56 @@ const startGame = () => {
   }
 
   return (
-<div className="min-h-screen flex flex-col items-center justify-center p-4">
-  <div className="flex flex-col items-center gap-8 w-full max-w-4xl mx-auto">
-        {/* Recruiter Image */}
-        <img
-          src={rpsRecruiter}
-          alt="RPS Recruiter"
-          className=""
-          onError={(e) => {
-            console.log("Failed to load recruiter image");
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-        <h1 className="text-2xl md:text-3xl font-bold text-center">Rock Paper Scissors Minus One</h1>
-        <div className="flex gap-8 text-lg md:text-xl font-semibold">
-          <p>Player: {count1}</p>
-          <p>Bot: {count2}</p>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="flex flex-col items-center gap-8 w-full max-w-4xl mx-auto min-h-[80vh]">
+        {/* Recruiter Image - only show during normal gameplay, not during game result */}
+        {!gameResult && (
+          <img
+            src={rpsRecruiter}
+            alt="RPS Recruiter"
+            className=""
+            onError={(e) => {
+              console.log("Failed to load recruiter image");
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        )}
+        {/* Win/Lose Image - only show during game result */}
+        {gameResult && (
+          <img
+            src={
+              gameResult.includes("You win")
+                ? youwin
+                : gameResult.includes("It's a tie")
+                ? happysg
+                : youlose
+            }
+            alt={
+              gameResult.includes("You win")
+                ? "You Win"
+                : gameResult.includes("It's a tie")
+                ? "Tie"
+                : "You Lose"
+            }
+            className="w-96 h-96 md:w-[32rem] md:h-[32rem] lg:w-[40rem] lg:h-[40rem] object-contain"
+            onError={(e) => {
+              console.log("Failed to load win/lose image");
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        )}
+
+        <h1 className="text-2xl md:text-3xl font-bold text-center">
+          Rock Paper Scissors Minus One
+        </h1>
+
+        {/* Score - only show during normal gameplay */}
+        {!gameResult && (
+          <div className="flex gap-8 text-lg md:text-xl font-semibold">
+            <p>Player: {count1}</p>
+            <p>Bot: {count2}</p>
+          </div>
+        )}
 
         {/* Timer Display */}
         {!gameResult && (
@@ -297,18 +341,28 @@ const startGame = () => {
               </p>
             )}
             {!firstChoice && (
-              <p className="text-base md:text-lg font-semibold text-center px-4">Select your first choice:</p>
+              <p className="text-base md:text-lg font-semibold text-center px-4">
+                Select your first choice:
+              </p>
             )}
           </>
         )}
 
-        {/* Game Result Display */}
+        {/* Spacer for result stage to maintain layout */}
+        {gameResult && <div className="h-16"></div>}
+
+        {/* Game Result Display - make it bigger */}
         {gameResult && (
-          <p className="text-xl md:text-2xl font-bold text-center">{gameResult}</p>
+          <p className="text-4xl md:text-6xl lg:text-8xl font-bold text-center mb-8">
+            {gameResult}
+          </p>
         )}
 
+        {/* Another spacer for result stage */}
+        {gameResult && <div className="h-8"></div>}
+
         {/* Game Board with Player and Bot sides */}
-        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16 w-full">
+        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16 w-full flex-grow justify-center">
           {/* Player Side */}
           <div className="flex flex-col items-center gap-4 flex-1">
             <h2 className="text-lg font-semibold">Player</h2>
@@ -372,8 +426,10 @@ const startGame = () => {
             </div>
           </div>
 
-          {/* VS Text */}
-          <div className="text-xl md:text-2xl font-bold">VS</div>
+          {/* VS Text - only show during normal gameplay and result */}
+          {(takeAway || gameResult) && (
+            <div className="text-xl md:text-2xl font-bold">VS</div>
+          )}
 
           {/* Bot Side */}
           <div className="flex flex-col items-center gap-4 flex-1">
@@ -385,7 +441,7 @@ const startGame = () => {
                   className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain"
                   alt={botFinalChoice}
                 />
-              ) : botFirstChoice && botSecondChoice ? (
+              ) : botFirstChoice && botSecondChoice && !gameResult ? (
                 <>
                   <img
                     src={getImageSrc(botFirstChoice)}
@@ -398,9 +454,9 @@ const startGame = () => {
                     alt={botSecondChoice}
                   />
                 </>
-              ) : (
+              ) : !gameResult ? (
                 <div className="text-gray-400">Waiting...</div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
