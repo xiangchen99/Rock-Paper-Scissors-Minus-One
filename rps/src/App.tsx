@@ -78,7 +78,7 @@ function App() {
   });
   const [firstChoice, setFirstChoice] = useState<string | null>(null);
   const [secondChoice, setSecondChoice] = useState<string | null>(null);
-  const [takeAway, setTakeAway] = useState<string | null>(null);
+  const [remainChoice, setRemainChoice] = useState<string | null>(null);
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [botFirstChoice, setBotFirstChoice] = useState<string | null>(null);
   const [botSecondChoice, setBotSecondChoice] = useState<string | null>(null);
@@ -160,7 +160,7 @@ function App() {
     }, 10); // Update every 10ms for smooth animation
 
     return () => clearInterval(interval);
-  }, [timerActive, gameResult, firstChoice, secondChoice, takeAway]);
+  }, [timerActive, gameResult, firstChoice, secondChoice, remainChoice]);
 
   // Reset timer when stage changes
   useEffect(() => {
@@ -171,11 +171,11 @@ function App() {
 
     if (!firstChoice || !secondChoice) {
       setTimeLeft(4000); // 4 seconds for first two stages
-    } else if (!takeAway) {
+    } else if (!remainChoice) {
       setTimeLeft(2000); // 2 seconds for takeaway stage
     }
     setTimerActive(true);
-  }, [firstChoice, secondChoice, takeAway, gameResult]);
+  }, [firstChoice, secondChoice, remainChoice, gameResult]);
 
   const handleTimeUp = () => {
     const choices = ["Rock", "Paper", "Scissors"];
@@ -189,10 +189,10 @@ function App() {
       const randomRemaining =
         remaining[Math.floor(Math.random() * remaining.length)];
       handleChoice(randomRemaining);
-    } else if (!takeAway) {
+    } else if (!remainChoice) {
       // Pick one of the two choices to remove
-      const choiceToRemove = Math.random() < 0.5 ? firstChoice : secondChoice;
-      handleChoice(choiceToRemove);
+      const choiceToRemain = Math.random() < 0.5 ? firstChoice : secondChoice;
+      handleChoice(choiceToRemain);
     }
   };
 
@@ -206,20 +206,16 @@ function App() {
       const botChoices = simulateBotChoices();
       setBotFirstChoice(botChoices.first);
       setBotSecondChoice(botChoices.second);
-    } else if (!takeAway) {
-      setTakeAway(choice);
+    } else if (!remainChoice) {
+      setRemainChoice(choice);
       setTimerActive(false);
-
-      // Determine player's final choice
-      const playerFinalChoice =
-        firstChoice === choice ? secondChoice : firstChoice;
 
       // Bot makes its final choice
       const botFinal = simulateBotTakeaway(botFirstChoice!, botSecondChoice!);
       setBotFinalChoice(botFinal);
 
       // Determine winner
-      const result = determineWinner(playerFinalChoice, botFinal);
+      const result = determineWinner(choice, botFinal);
 
       if (result === "player") {
         setCount1(count1 + 1);
@@ -235,7 +231,7 @@ function App() {
       setTimeout(() => {
         setFirstChoice(null);
         setSecondChoice(null);
-        setTakeAway(null);
+        setRemainChoice(null);
         setGameResult(null);
         setBotFirstChoice(null);
         setBotSecondChoice(null);
@@ -247,8 +243,8 @@ function App() {
   };
 
   const getPlayerFinalChoice = () => {
-    if (takeAway && firstChoice && secondChoice) {
-      return firstChoice === takeAway ? secondChoice : firstChoice;
+    if (remainChoice && firstChoice && secondChoice) {
+      return remainChoice;
     }
     return null;
   };
@@ -361,10 +357,9 @@ return (
                   You chose {firstChoice}. Now select your second choice:
                 </p>
               )}
-              {secondChoice && !takeAway && (
+              {secondChoice && !remainChoice && (
                 <p className="text-base md:text-lg font-semibold text-center px-4">
-                  You chose {firstChoice} and {secondChoice}. Select one to take
-                  away:
+                  You chose {firstChoice} and {secondChoice}. Select one to remain:
                 </p>
               )}
               {!firstChoice && (
@@ -395,13 +390,13 @@ return (
               <h2 className="text-lg font-semibold">Player</h2>
               <div className="flex gap-2 md:gap-4 flex-wrap justify-center">
                 {/* Show final choice after takeaway, otherwise show current selections or all options */}
-                {takeAway ? (
+                {remainChoice ? (
                   <img
                     src={getImageSrc(getPlayerFinalChoice()!)}
                     className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain"
                     alt={getPlayerFinalChoice()!}
                   />
-                ) : secondChoice && !takeAway ? (
+                ) : secondChoice && !remainChoice ? (
                   <>
                     <img
                       src={getImageSrc(firstChoice!)}
@@ -454,7 +449,7 @@ return (
             </div>
 
             {/* VS Text - only show during normal gameplay and result */}
-            {(takeAway || gameResult) && (
+            {(remainChoice || gameResult) && (
               <div className="text-xl md:text-2xl font-bold">VS</div>
             )}
 
