@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import rockImg from "./assets/rock.png";
 import paperImg from "./assets/paper.png";
@@ -53,6 +52,37 @@ function simulateBotTakeaway(first: string, second: string): string {
   return finalChoice;
 }
 
+function simulateHardBotTakeaway(
+  botFirst: string,
+  botSecond: string,
+  playerFirst: string,
+  playerSecond: string
+): string {
+  // Hard bot analyzes all possible outcomes and chooses optimally
+  const botOptions = [botFirst, botSecond];
+  const playerOptions = [playerFirst, playerSecond];
+
+  // For each bot choice, calculate the worst-case scenario against player options
+  const botOutcomes = botOptions.map((botChoice) => {
+    const results = playerOptions.map((playerChoice) => {
+      const result = determineWinner(playerChoice, botChoice);
+      // From bot's perspective: win = 1, tie = 0, loss = -1
+      return result === "bot" ? 1 : result === "tie" ? 0 : -1;
+    });
+
+    // Get the worst outcome for this bot choice (player's best response)
+    const worstOutcome = Math.min(...results);
+    return { choice: botChoice, worstOutcome };
+  });
+
+  // Choose the bot option with the best worst-case outcome (minimax)
+  const bestChoice = botOutcomes.reduce((best, current) =>
+    current.worstOutcome > best.worstOutcome ? current : best
+  );
+
+  return bestChoice.choice;
+}
+
 function getImageSrc(choice: string): string {
   switch (choice) {
     case "Rock":
@@ -69,11 +99,11 @@ function getImageSrc(choice: string): string {
 function App() {
   // Load initial counts from localStorage
   const [count1, setCount1] = useState(() => {
-    const saved = localStorage.getItem('rps-player-wins');
+    const saved = localStorage.getItem("rps-player-wins");
     return saved ? parseInt(saved, 10) : 0;
   });
   const [count2, setCount2] = useState(() => {
-    const saved = localStorage.getItem('rps-bot-wins');
+    const saved = localStorage.getItem("rps-bot-wins");
     return saved ? parseInt(saved, 10) : 0;
   });
   const [firstChoice, setFirstChoice] = useState<string | null>(null);
@@ -86,24 +116,25 @@ function App() {
   const [timeLeft, setTimeLeft] = useState<number>(4000); // Start with 4 seconds in milliseconds
   const [timerActive, setTimerActive] = useState<boolean>(true);
   const [gameStarted, setGameStarted] = useState(false);
+  const [difficulty, setDifficulty] = useState<"easy" | "hard">("easy");
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Save counts to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('rps-player-wins', count1.toString());
+    localStorage.setItem("rps-player-wins", count1.toString());
   }, [count1]);
 
   useEffect(() => {
-    localStorage.setItem('rps-bot-wins', count2.toString());
+    localStorage.setItem("rps-bot-wins", count2.toString());
   }, [count2]);
 
   // Reset stats function
   const resetStats = () => {
     setCount1(0);
     setCount2(0);
-    localStorage.removeItem('rps-player-wins');
-    localStorage.removeItem('rps-bot-wins');
+    localStorage.removeItem("rps-player-wins");
+    localStorage.removeItem("rps-bot-wins");
   };
 
   // Music effect - start playing when component mounts
@@ -210,8 +241,18 @@ function App() {
       setRemainChoice(choice);
       setTimerActive(false);
 
-      // Bot makes its final choice
-      const botFinal = simulateBotTakeaway(botFirstChoice!, botSecondChoice!);
+      // Bot makes its final choice based on difficulty
+      let botFinal: string;
+      if (difficulty === "hard") {
+        botFinal = simulateHardBotTakeaway(
+          botFirstChoice!,
+          botSecondChoice!,
+          firstChoice!,
+          secondChoice!
+        );
+      } else {
+        botFinal = simulateBotTakeaway(botFirstChoice!, botSecondChoice!);
+      }
       setBotFinalChoice(botFinal);
 
       // Determine winner
@@ -271,6 +312,39 @@ function App() {
         <h1 className="text-2xl md:text-3xl font-bold text-center">
           Rock Paper Scissors Minus One
         </h1>
+
+        {/* Difficulty Toggle */}
+        <div className="flex flex-col items-center gap-4">
+          <h2 className="text-xl font-semibold">Select Difficulty:</h2>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setDifficulty("easy")}
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                difficulty === "easy"
+                  ? "bg-green-500 text-white shadow-lg scale-105"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              Easy
+            </button>
+            <button
+              onClick={() => setDifficulty("hard")}
+              className={`px-6 py-3 rounded-lg font-medium transition-all ${
+                difficulty === "hard"
+                  ? "bg-red-500 text-white shadow-lg scale-105"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              Hard
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 text-center max-w-md">
+            {difficulty === "easy"
+              ? "Bot makes random choices"
+              : "Bot uses optimal strategy to maximize its chances"}
+          </p>
+        </div>
+
         <button
           onClick={startGame}
           className="px-8 py-4 bg-blue-500 text-white text-xl font-bold rounded-lg hover:bg-blue-600 transition-colors shadow-lg"
@@ -289,222 +363,267 @@ function App() {
     );
   }
 
-return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex flex-col items-center justify-center p-4 flex-grow">
-        <div className="flex flex-col items-center gap-8 w-full max-w-4xl mx-auto min-h-[80vh]">
-          {/* ...existing code for game content... */}
-          {/* Recruiter Image - only show during normal gameplay, not during game result */}
-          {!gameResult && (
-            <img
-              src={rpsRecruiter}
-              alt="RPS Recruiter"
-              className=""
-              onError={(e) => {
-                console.log("Failed to load recruiter image");
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          )}
-          {/* Win/Lose Image - only show during game result */}
-          {gameResult && (
-            <img
-              src={
-                gameResult.includes("You win")
-                  ? youwin
-                  : gameResult.includes("It's a tie")
-                  ? happysg
-                  : youlose
-              }
-              alt={
-                gameResult.includes("You win")
-                  ? "You Win"
-                  : gameResult.includes("It's a tie")
-                  ? "Tie"
-                  : "You Lose"
-              }
-              className="w-96 h-96 md:w-[32rem] md:h-[32rem] lg:w-[40rem] lg:h-[40rem] object-contain"
-              onError={(e) => {
-                console.log("Failed to load win/lose image");
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          )}
-
-          <h1 className="text-2xl md:text-3xl font-bold text-center">
-            Rock Paper Scissors Minus One
-          </h1>
-
-          {/* Score - only show during normal gameplay */}
-          {!gameResult && (
-            <div className="flex gap-8 text-lg md:text-xl font-semibold">
-              <p>Player: {count1}</p>
-              <p>Bot: {count2}</p>
-            </div>
-          )}
-
-          {/* Timer Display */}
-          {!gameResult && (
-            <div className="text-xl md:text-2xl font-bold text-red-500">
-              Time Left: {formatTime(timeLeft)}s
-            </div>
-          )}
-
-          {!gameResult && (
-            <>
-              {firstChoice && !secondChoice && (
-                <p className="text-base md:text-lg font-semibold text-center px-4">
-                  You chose {firstChoice}. Now select your second choice:
-                </p>
-              )}
-              {secondChoice && !remainChoice && (
-                <p className="text-base md:text-lg font-semibold text-center px-4">
-                  You chose {firstChoice} and {secondChoice}. Select one to remain:
-                </p>
-              )}
-              {!firstChoice && (
-                <p className="text-base md:text-lg font-semibold text-center px-4">
-                  Select your first choice:
-                </p>
-              )}
-            </>
-          )}
-
-          {/* Spacer for result stage to maintain layout */}
-          {gameResult && <div className="h-16"></div>}
-
-          {/* Game Result Display - make it bigger */}
-          {gameResult && (
-            <p className="text-4xl md:text-6xl lg:text-8xl font-bold text-center mb-8">
-              {gameResult}
-            </p>
-          )}
-
-          {/* Another spacer for result stage */}
-          {gameResult && <div className="h-8"></div>}
-
-          {/* Game Board with Player and Bot sides */}
-          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16 w-full flex-grow justify-center">
-            {/* Player Side */}
-            <div className="flex flex-col items-center gap-4 flex-1">
-              <h2 className="text-lg font-semibold">Player</h2>
-              <div className="flex gap-2 md:gap-4 flex-wrap justify-center">
-                {/* Show final choice after takeaway, otherwise show current selections or all options */}
-                {remainChoice ? (
-                  <img
-                    src={getImageSrc(getPlayerFinalChoice()!)}
-                    className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain"
-                    alt={getPlayerFinalChoice()!}
-                  />
-                ) : secondChoice && !remainChoice ? (
-                  <>
-                    <img
-                      src={getImageSrc(firstChoice!)}
-                      className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain cursor-pointer hover:scale-110 transition-transform"
-                      alt={firstChoice!}
-                      onClick={() => handleChoice(firstChoice!)}
-                    />
-                    <img
-                      src={getImageSrc(secondChoice)}
-                      className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain cursor-pointer hover:scale-110 transition-transform"
-                      alt={secondChoice}
-                      onClick={() => handleChoice(secondChoice!)}
-                    />
-                  </>
-                ) : !gameResult ? (
-                  <>
-                    <img
-                      src={rockImg}
-                      className={`w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain cursor-pointer hover:scale-110 transition-transform ${
-                        firstChoice && !secondChoice && firstChoice === "Rock"
-                          ? "grayscale opacity-50"
-                          : ""
-                      }`}
-                      alt="Rock"
-                      onClick={() => handleChoice("Rock")}
-                    />
-                    <img
-                      src={paperImg}
-                      className={`w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain cursor-pointer hover:scale-110 transition-transform ${
-                        firstChoice && !secondChoice && firstChoice === "Paper"
-                          ? "grayscale opacity-50"
-                          : ""
-                      }`}
-                      alt="Paper"
-                      onClick={() => handleChoice("Paper")}
-                    />
-                    <img
-                      src={scissorsImg}
-                      className={`w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain cursor-pointer hover:scale-110 transition-transform ${
-                        firstChoice && !secondChoice && firstChoice === "Scissors"
-                          ? "grayscale opacity-50"
-                          : ""
-                      }`}
-                      alt="Scissors"
-                      onClick={() => handleChoice("Scissors")}
-                    />
-                  </>
-                ) : null}
-              </div>
-            </div>
-
-            {/* VS Text - only show during normal gameplay and result */}
-            {(remainChoice || gameResult) && (
-              <div className="text-xl md:text-2xl font-bold">VS</div>
-            )}
-
-            {/* Bot Side */}
-            <div className="flex flex-col items-center gap-4 flex-1">
-              <h2 className="text-lg font-semibold">Bot</h2>
-              <div className="flex gap-2 md:gap-4 flex-wrap justify-center">
-                {botFinalChoice ? (
-                  <img
-                    src={getImageSrc(botFinalChoice)}
-                    className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain"
-                    alt={botFinalChoice}
-                  />
-                ) : botFirstChoice && botSecondChoice && !gameResult ? (
-                  <>
-                    <img
-                      src={getImageSrc(botFirstChoice)}
-                      className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain"
-                      alt={botFirstChoice}
-                    />
-                    <img
-                      src={getImageSrc(botSecondChoice)}
-                      className="w-20 h-20 md:w-32 md:h-32 lg:w-40 lg:h-40 object-contain"
-                      alt={botSecondChoice}
-                    />
-                  </>
-                ) : !gameResult ? (
-                  <div className="text-gray-400">Waiting...</div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="flex flex-col items-center gap-2 p-4 border-t border-gray-200">
-        <div className="flex items-center gap-1 text-sm text-gray-600">
-          <span>made with</span>
-          <span className="text-red-500 text-lg">❤️</span>
-          <span>by Xiang</span>
-        </div>
-        <button
-          onClick={resetStats}
-          className="px-4 py-2 bg-amber-950 text-white text-sm font-medium rounded hover:bg-red-600 transition-colors"
-        >
-          Reset Stats
-        </button>
-      </footer>
-
-      {/* Background Music */}
-      <audio ref={audioRef} preload="auto">
+  // Main game UI
+  return (
+    <div className="min-h-screen flex flex-col items-center gap-6 p-4">
+      <audio ref={audioRef} loop preload="auto">
         <source src={musicFile} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
+
+      {/* Header with title, stats, and reset button */}
+      {/* Character image */}
+      <div className="">
+        {gameResult ? (
+          <>
+            {gameResult.includes("You win") && (
+              <img
+                src={youwin}
+                alt="You Win"
+                className="w-5xl h-5xl object-contain mx-auto"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            )}
+            {gameResult.includes("Bot wins") && (
+              <img
+                src={youlose}
+                alt="You Lose"
+                className="w-5xl h-5xl object-contain mx-auto"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            )}
+            {gameResult.includes("tie") && (
+              <img
+                src={happysg}
+                alt="Tie"
+                className="w-5xl h-5xl object-contain mx-auto"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            )}
+          </>
+        ) : (
+          <img
+            src={rpsRecruiter}
+            alt="Game Character"
+            className="w-5xl h-5xl object-contain mx-auto"
+            onError={(e) => {
+              console.log("Failed to load character image");
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        )}
+      </div>
+      <div className="flex flex-col items-center gap-4 w-full max-w-4xl">
+        <h1 className="text-2xl md:text-3xl font-bold text-center">
+          Rock Paper Scissors Minus One
+        </h1>
+
+        <div className="flex flex-col sm:flex-row items-center gap-4 text-center">
+          <div className="flex gap-6">
+            <div className="bg-green-100 px-4 py-2 rounded-lg">
+              <div className="text-sm text-gray-600">You</div>
+              <div className="text-2xl font-bold text-green-600">{count1}</div>
+            </div>
+            <div className="bg-red-100 px-4 py-2 rounded-lg">
+              <div className="text-sm text-gray-600">Bot ({difficulty})</div>
+              <div className="text-2xl font-bold text-red-600">{count2}</div>
+            </div>
+          </div>
+          <button
+            onClick={resetStats}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
+          >
+            Reset Stats
+          </button>
+        </div>
+      </div>
+
+      {/* Timer */}
+      <div className="text-center">
+        <div className="text-lg font-semibold mb-2">
+          Time Left: {formatTime(timeLeft)}
+        </div>
+        <div className="w-64 h-4 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-400 transition-all duration-75 ease-linear"
+            style={{
+              width: `${
+                (timeLeft / (!firstChoice || !secondChoice ? 4000 : 2000)) * 100
+              }%`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Game phases */}
+      <div className="flex flex-col items-center gap-6 w-full max-w-4xl">
+        {!firstChoice && (
+          <>
+            <h2 className="text-xl font-semibold">Select your first choice:</h2>
+            <div className="flex gap-4 flex-wrap justify-center">
+              {["Rock", "Paper", "Scissors"].map((choice) => (
+                <button
+                  key={choice}
+                  onClick={() => handleChoice(choice)}
+                  className="flex flex-col items-center gap-2 p-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
+                >
+                  <img
+                    src={getImageSrc(choice)}
+                    alt={choice}
+                    className="w-16 h-16 object-contain"
+                  />
+                  <span className="font-medium">{choice}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {firstChoice && !secondChoice && (
+          <>
+            <h2 className="text-xl font-semibold">
+              Select your second choice:
+            </h2>
+            <div className="flex gap-4 flex-wrap justify-center">
+              {["Rock", "Paper", "Scissors"]
+                .filter((choice) => choice !== firstChoice)
+                .map((choice) => (
+                  <button
+                    key={choice}
+                    onClick={() => handleChoice(choice)}
+                    className="flex flex-col items-center gap-2 p-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
+                  >
+                    <img
+                      src={getImageSrc(choice)}
+                      alt={choice}
+                      className="w-16 h-16 object-contain"
+                    />
+                    <span className="font-medium">{choice}</span>
+                  </button>
+                ))}
+            </div>
+            <div className="text-center">
+              <p className="text-gray-600">Your first choice:</p>
+              <div className="flex items-center gap-2 justify-center mt-2">
+                <img
+                  src={getImageSrc(firstChoice)}
+                  alt={firstChoice}
+                  className="w-12 h-12 object-contain"
+                />
+                <span className="font-medium">{firstChoice}</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {firstChoice && secondChoice && !remainChoice && (
+          <>
+            <h2 className="text-xl font-semibold">Choose which one to keep:</h2>
+            <div className="flex gap-4 flex-wrap justify-center">
+              {[firstChoice, secondChoice].map((choice) => (
+                <button
+                  key={choice}
+                  onClick={() => handleChoice(choice)}
+                  className="flex flex-col items-center gap-2 p-4 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
+                >
+                  <img
+                    src={getImageSrc(choice)}
+                    alt={choice}
+                    className="w-16 h-16 object-contain"
+                  />
+                  <span className="font-medium">{choice}</span>
+                </button>
+              ))}
+            </div>
+            <div className="text-center">
+              <p className="text-gray-600">Your choices:</p>
+              <div className="flex items-center gap-6 justify-center mt-2">
+                <div className="flex items-center gap-2">
+                  <img
+                    src={getImageSrc(firstChoice)}
+                    alt={firstChoice}
+                    className="w-12 h-12 object-contain"
+                  />
+                  <span className="font-medium">{firstChoice}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <img
+                    src={getImageSrc(secondChoice)}
+                    alt={secondChoice}
+                    className="w-12 h-12 object-contain"
+                  />
+                  <span className="font-medium">{secondChoice}</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Show bot choices when player has made both selections */}
+        {firstChoice && secondChoice && botFirstChoice && botSecondChoice && (
+          <div className="text-center">
+            <p className="text-gray-600">Bot's choices:</p>
+            <div className="flex items-center gap-6 justify-center mt-2">
+              <div className="flex items-center gap-2">
+                <img
+                  src={getImageSrc(botFirstChoice)}
+                  alt={botFirstChoice}
+                  className="w-12 h-12 object-contain"
+                />
+                <span className="font-medium">{botFirstChoice}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <img
+                  src={getImageSrc(botSecondChoice)}
+                  alt={botSecondChoice}
+                  className="w-12 h-12 object-contain"
+                />
+                <span className="font-medium">{botSecondChoice}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Game result */}
+        {gameResult && (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">{gameResult}</h2>
+            <div className="flex items-center gap-8 justify-center">
+              <div className="text-center">
+                <p className="text-gray-600 mb-2">You played:</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <img
+                    src={getImageSrc(getPlayerFinalChoice() || "")}
+                    alt={getPlayerFinalChoice() || ""}
+                    className="w-16 h-16 object-contain"
+                  />
+                  <span className="font-medium text-lg">
+                    {getPlayerFinalChoice()}
+                  </span>
+                </div>
+              </div>
+              <div className="text-4xl">VS</div>
+              <div className="text-center">
+                <p className="text-gray-600 mb-2">Bot played:</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <img
+                    src={getImageSrc(botFinalChoice || "")}
+                    alt={botFinalChoice || ""}
+                    className="w-16 h-16 object-contain"
+                  />
+                  <span className="font-medium text-lg">{botFinalChoice}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
