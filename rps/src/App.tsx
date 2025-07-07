@@ -72,18 +72,43 @@ function App() {
   const [botFinalChoice, setBotFinalChoice] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(4000); // Start with 4 seconds in milliseconds
   const [timerActive, setTimerActive] = useState<boolean>(true);
+  const [gameStarted, setGameStarted] = useState(false);
+
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Music effect - start playing when component mounts
-  useEffect(() => {
+const startGame = () => {
+  setGameStarted(true);
+  
+  // Use setTimeout to ensure the audio element is ready
+  setTimeout(() => {
     if (audioRef.current) {
       audioRef.current.loop = true;
-      audioRef.current.volume = 0.3; // Set volume to 30%
-      audioRef.current.play().catch((error) => {
-        console.log("Auto-play prevented:", error);
-      });
+      audioRef.current.volume = 0.3;
+      
+      // Reset the audio to beginning in case it was paused
+      audioRef.current.currentTime = 0;
+      
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log("Music started successfully!");
+          })
+          .catch((error) => {
+            console.log("Failed to start music:", error);
+            // Try alternative approach
+            document.addEventListener('click', () => {
+              if (audioRef.current) {
+                audioRef.current.play();
+              }
+            }, { once: true });
+          });
+      }
     }
-  }, []);
+  }, 100);
+};
 
   // Timer effect
   useEffect(() => {
@@ -199,6 +224,26 @@ function App() {
     const milliseconds = ms % 1000;
     return `${seconds}.${milliseconds.toString().padStart(3, "0")}`;
   };
+
+  if (!gameStarted) {
+    return (
+      <div className="flex flex-col items-center gap-8">
+        <h1>Rock Paper Scissors Minus One</h1>
+        <button
+          onClick={startGame}
+          className="px-8 py-4 bg-blue-500 text-white text-xl font-bold rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          🎵 Start Game 🎵
+        </button>
+        <p className="text-gray-600">Click to start the game with music!</p>
+
+        <audio ref={audioRef} preload="auto">
+          <source src={musicFile} type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    );
+  }
 
   return (
     <>
