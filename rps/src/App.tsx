@@ -296,6 +296,7 @@ function App() {
     return `${seconds}.${milliseconds.toString().padStart(3, "0")}`;
   };
 
+  {/* Welcome Screen */}
   if (!gameStarted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-4">
@@ -351,9 +352,37 @@ function App() {
         >
           🎵 Start Game 🎵
         </button>
-        <p className="text-gray-600 text-center">
-          Click to start the game with music!
-        </p>
+        <div className="text-center space-y-2">
+          <p className="text-gray-600">
+            Click to start the game with music!
+          </p>
+          {/* Privacy Policy */}
+          <p className="text-gray-600 text-sm max-w-md">
+            By playing this game, you agree to our{" "}
+            <a 
+              href="https://docs.google.com/document/d/1XZNslw3Fctc4P3LaJPum2QIgV_rBPas45fWv1ZKXf4w/edit?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-700 underline"
+            >
+              privacy policy
+            </a>
+          </p>
+        </div>
+
+        {/* Footer */}
+        <footer className="text-center text-gray-600 text-sm space-y-2 mt-8">
+          <p>Made with ❤️ by Xiang</p>
+          <p>© 2025 Talsch Interactive</p>
+          <a 
+            href="https://github.com/xiangchen99/Rock-Paper-Scissors-Minus-One"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-700 underline"
+          >
+            Source Code
+          </a>
+        </footer>
 
         <audio ref={audioRef} preload="auto">
           <source src={musicFile} type="audio/mpeg" />
