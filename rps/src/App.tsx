@@ -296,7 +296,9 @@ function App() {
     return `${seconds}.${milliseconds.toString().padStart(3, "0")}`;
   };
 
-  {/* Welcome Screen */}
+  {
+    /* Welcome Screen */
+  }
   if (!gameStarted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-4">
@@ -353,13 +355,11 @@ function App() {
           🎵 Start Game 🎵
         </button>
         <div className="text-center space-y-2">
-          <p className="text-gray-600">
-            Click to start the game with music!
-          </p>
+          <p className="text-gray-600">Click to start the game with music!</p>
           {/* Privacy Policy */}
           <p className="text-gray-600 text-sm max-w-md">
             By playing this game, you agree to our{" "}
-            <a 
+            <a
               href="https://docs.google.com/document/d/1XZNslw3Fctc4P3LaJPum2QIgV_rBPas45fWv1ZKXf4w/edit?usp=sharing"
               target="_blank"
               rel="noopener noreferrer"
@@ -374,7 +374,7 @@ function App() {
         <footer className="text-center text-gray-600 text-sm space-y-2 mt-8">
           <p>Made with ❤️ by Xiang</p>
           <p>© 2025 Talsch Interactive</p>
-          <a 
+          <a
             href="https://github.com/xiangchen99/Rock-Paper-Scissors-Minus-One"
             target="_blank"
             rel="noopener noreferrer"
@@ -399,7 +399,6 @@ function App() {
         <source src={musicFile} type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
-
       {/* Header with title, stats, and reset button */}
       {/* Character image */}
       <div className="">
@@ -409,7 +408,7 @@ function App() {
               <img
                 src={youwin}
                 alt="You Win"
-                className="w-5xl h-5xl object-contain mx-auto"
+                className="w-6xl h-6xl object-contain mx-auto text-4xl"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
@@ -419,7 +418,7 @@ function App() {
               <img
                 src={youlose}
                 alt="You Lose"
-                className="w-5xl h-5xl object-contain mx-auto"
+                className="w-6xl h-6xl object-contain mx-auto text-4xl"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
@@ -429,7 +428,7 @@ function App() {
               <img
                 src={happysg}
                 alt="Tie"
-                className="w-5xl h-5xl object-contain mx-auto"
+                className="w-6xl h-6xl object-contain mx-auto text-4xl"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
@@ -489,6 +488,40 @@ function App() {
           />
         </div>
       </div>
+
+      {/* Game result */}
+      {gameResult && (
+        <div className="text-center">
+          <h2 className="text-9xl font-bold mb-4">{gameResult}</h2>
+          <div className="flex items-center gap-8 justify-center">
+            <div className="text-center">
+              <p className="text-gray-600 mb-2">You played:</p>
+              <div className="flex items-center gap-2 justify-center">
+                <img
+                  src={getImageSrc(getPlayerFinalChoice() || "")}
+                  alt={getPlayerFinalChoice() || ""}
+                  className="w-16 h-16 object-contain"
+                />
+                <span className="font-medium text-lg">
+                  {getPlayerFinalChoice()}
+                </span>
+              </div>
+            </div>
+            <div className="text-4xl">VS</div>
+            <div className="text-center">
+              <p className="text-gray-600 mb-2">Bot played:</p>
+              <div className="flex items-center gap-2 justify-center">
+                <img
+                  src={getImageSrc(botFinalChoice || "")}
+                  alt={botFinalChoice || ""}
+                  className="w-16 h-16 object-contain"
+                />
+                <span className="font-medium text-lg">{botFinalChoice}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Game phases */}
       <div className="flex flex-col items-center gap-6 w-full max-w-4xl">
@@ -614,40 +647,6 @@ function App() {
                   className="w-12 h-12 object-contain"
                 />
                 <span className="font-medium">{botSecondChoice}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Game result */}
-        {gameResult && (
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">{gameResult}</h2>
-            <div className="flex items-center gap-8 justify-center">
-              <div className="text-center">
-                <p className="text-gray-600 mb-2">You played:</p>
-                <div className="flex items-center gap-2 justify-center">
-                  <img
-                    src={getImageSrc(getPlayerFinalChoice() || "")}
-                    alt={getPlayerFinalChoice() || ""}
-                    className="w-16 h-16 object-contain"
-                  />
-                  <span className="font-medium text-lg">
-                    {getPlayerFinalChoice()}
-                  </span>
-                </div>
-              </div>
-              <div className="text-4xl">VS</div>
-              <div className="text-center">
-                <p className="text-gray-600 mb-2">Bot played:</p>
-                <div className="flex items-center gap-2 justify-center">
-                  <img
-                    src={getImageSrc(botFinalChoice || "")}
-                    alt={botFinalChoice || ""}
-                    className="w-16 h-16 object-contain"
-                  />
-                  <span className="font-medium text-lg">{botFinalChoice}</span>
-                </div>
               </div>
             </div>
           </div>
